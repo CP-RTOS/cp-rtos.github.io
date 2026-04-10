@@ -1,0 +1,13 @@
+title: Cramer's FreeRTOS Docs
+description: Ryan Cramer's RTOS Documentation
+remote_theme: just-the-docs/just-the-docs
+color_scheme: dark
+search_enabled: true
+collapse_navigation: false
+show_nav_level: 3
+markdown: kramdown
+
+kramdown:
+  math_engine: mathjax
+  math_engine_opts:
+    preview: true
