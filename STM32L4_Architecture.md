@@ -7,6 +7,7 @@ nav_order: 2
 
 # STM32L47x Architecture 
 
+## [STM32L47x Reference Manual](rm0351-stm32l47xxx-stm32l48xxx-stm32l49xxx-and-stm32l4axxx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf)
 
 Main system is 32-bit (multilayer) AHB bus matrix: 
  - Five Masters 
@@ -67,4 +68,6 @@ If 16 or 8 bit access is performed on an APB register, the access is transformed
 
 ![STM32L4 Peripheral Map Continued Pt 2](STM32L4/architecture/peripheral_boundary_addresses_cont2.png) 
 
-![STM32L4 Peripheral Map Continued Pt 3](STM32L4/architecture/peripheral_boundary_addresses_cont3.png)
+![STM32L4 Peripheral Map Continued Pt 3](STM32L4/architecture/peripheral_boundary_addresses_cont3.png) 
+
+![STM32L4 Peripheral Map Continued Pt 4](STM32L4/architecture/peripheral_boundary_addresses_cont4.png)
