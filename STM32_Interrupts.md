@@ -1,7 +1,7 @@
 ---
 title: STM32 Interrupts
 parent: Cramer's FreeRTOS Homepage
-nav_order: 2
+nav_order: 3
 ---
 
 # STM32 Interrupts 
