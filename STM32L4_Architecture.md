@@ -1,7 +1,7 @@
 ---
 title: STM32L47x Architecture 
 parent: Cramer's FreeRTOS Homepage 
-nav_order: 2 
+nav_order: 3
 --- 
 
 

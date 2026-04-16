@@ -1,7 +1,7 @@
 ---
 title: STM32L4 Basics
 parent: Cramer's FreeRTOS Homepage
-nav_order: 1
+nav_order: 2
 ---
 
 # STM32L4 - Intro to Development 
