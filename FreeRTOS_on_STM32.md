@@ -3,6 +3,8 @@ title: FreeRTOS on STM32
 parent: Cramer's FreeRTOS Homepage
 nav_order: 1
 ---
+ 
+[FreeRTOS Tasks](FreeRTOS_Tasks.md) 
 
 # FreeRTOS on STM32
 
@@ -324,4 +326,99 @@ uint8_t* buffer = osPoolAlloc(PoolHandle);
  - used for task switching on configTICK_RATE_HZ timebase 
  - set PendSV is context switch is necessary 
 
-## NVIC Configuration 
+![Interrupts used by OS](FreeRTOS/interrupts_use_with_os.png) 
+
+### NVIC Configuration 
+
+![NVIC Config Interrupts](FreeRTOS/interrupt_priorities.png) 
+
+### API functions in IRQ procedures 
+
+Within FreeRTOS API there are deciated functions to be executed within IRQ procedures. All of functions has FromISR suffix, the difference is it gives the program *hp_task, which is a pointer to the variable which is used to indicate whether to operation on the queue or sempahore within IRQ cuases unblocking of the task with higher priority than currently running. If this parameter is pdTRUE, context switch (PendSV irq) should be requested by kernel before the interrupt exits. 
+
+When using CMSIS API, process is automatically handled by the library. 
+```
+osKernelSysTick() -> xTaskGetTickCountFromISR() 
+osThreadResume() -> xTaskResumeFromISR() 
+osThreadGetPriority() -> uxTaskPriorityGetFromISR() 
+osSignalSet() -> xTaskGenericNotifyFromISR() 
+osMessagePut/osMailPut() -> xQueueSendFromISR() 
+osMessageGet/osMailGet() -> xQueueReceiveFromISR() 
+osMessageWaiting() -> uxQueueMessagesWaitingFromISR() 
+osMutexWait()/osSemaphoreWait -> xSemaphoreTakeFromISR() 
+osMutexRelease/osSemaphoreRelease -> xSemaphoreGiveFromISR() 
+osTimerStart() -> xTimerChangePeriodFromISR() 
+osTimerStop() -> xTimerStopFromISR() 
+``` 
+
+## Boot Sequence and Timing 
+
+### HW Dependent: 
+
+ - config clocks (CPU and peripherals) 
+ - init static and global variables that contain the zero value (bss) 
+ - init variables that don't contain a zero 
+ - Perform any other hardware set up required 
+
+### FreeRTOS related 
+ - Create application queues, semaphores, and mutexes (500 CPU cycles / object) 
+ - Create application tasks (1100 CPU cycles/task) 
+ - Start RTOS scheduler (1200 CPU cycles) 
+  - RTOS scheduler is started by calling vTaskStartScheduler(). The start up process includes configuring the tick interrupt, creating the idle task, then restoring context of the first task to run. 
+
+### Idle Task Code 
+
+ - idle task generated automatically when scheduler is started 
+ - portTASK_FUNCTION() function within task.c 
+ - performing in endless loop:
+    - check for deleted tasks to clean the memory 
+    - taskYIELD() if we are not using preemption (configUSE_PREEMPTION=0) 
+    - Executes vApplicationIdleHook() if configUSE_IDLE_HOOK=1 
+    - configUSE_TICKLESS_IDLE!=0 -> low power entry 
+
+## FreeRTOS start 
+### 1. started with osKernelStart 
+ - calls vTaskStartScheduler() from FreeRTOS API 
+### 2. creating an IDLE task (xTaskCreate())
+### 3. disable all interrupts (portDISABLE_INTERRUPTS())  
+ to be sure that no tick will happen before or during call to xPortStartScheduler() function 
+### 4. xPortStartScheduler() function (port.c) configures lowest priority level for SysTick and PendSV interrupt 
+  then it starts the timer the generates the tick (SysTick), enables FPU, and 
+### 5. starts task using prvPortStartFirstTask() 
+ - this is usually written in assembly 
+ - locates the stack and sets MSP (main stack pointer, used by OS) to the start of the stack 
+ - after setting MSP, enables interrupts
+ - finally, triggers SVC interrupt 
+### 6. As a result of SVC IRQ, vPortSVCHandler() is called (port.c) 
+ - vPortSVCHandler() restores context
+ - loads TCB (Task Control Block) for the first task (highest priority)
+ - and starts execution 
+
+## List Management 
+Almost all behavior of FreeRTOS is based on lists. Mutex are sempahore are lists. 
+
+ReadyTaskLists[configMAX_PRIORITIES] - prioritized ready tasks list separate for each task priority (up to configMAX_PRIORITIES), values stored in FreeRTOSConfig.h 
+
+TasksWaitingTermination - list of tasks which have been deleted but their memory pools have not been freed yet 
+
+SuspendedTaskList - list of all tasks currently suspended 
+
+PendingReadyTaskList - list of tasks that have been read while the scheduler was suspended 
+
+DelayedTaskList - list of delayed tasks 
+
+OverflowDelayedTaskList - tasks which have overflow the current tick time 
+
+## API Operations on Scheduler 
+
+- Start = osKernelStart() 
+    - set priorites for PendSV and SysTick IRQs 
+    - starts kernel (using SVC procedure) 
+    - IDLE task created (with or without handler) 
+- Stop not implemented in STM32 (vTaskEndScheduler()) 
+- osKernelRunning() 
+    - 0 - RTOS not started 
+    - 1 - RTOS already started 
+
+- Get value of Kernel SysTick Timer osKernelSysTick() 
+    - uint32_t (24 bit counter)
